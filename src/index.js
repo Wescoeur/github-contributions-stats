@@ -39,7 +39,6 @@ export async function getStarsDates (github, user, repo) {
   })
 
   const stars = map(result, 'starred_at')
-
   while (github.hasNextPage(result)) {
     result = await github.getNextPage(result, STARGAZERS_HEADERS)
     stars.push.apply(stars, map(result, 'starred_at'))
@@ -51,16 +50,47 @@ export async function getStarsDates (github, user, repo) {
 export async function getForksDates (github, user, repo) {
   let result = await github.repos.getForks({
     repo,
-    user,
-    sort: 'oldest'
+    sort: 'oldest',
+    user
   })
 
   const forks = map(result, 'created_at')
-
   while (github.hasNextPage(result)) {
     result = await github.getNextPage(result)
     forks.push.apply(forks, map(result, 'created_at'))
   }
 
   return forks
+}
+
+export async function getCommitsDates (github, user, repo) {
+  let result = await github.repos.getCommits({
+    repo,
+    user
+  })
+
+  const commits = map(result, ({ commit }) => commit.author.date)
+  while (github.hasNextPage(result)) {
+    result = await github.getNextPage(result)
+    commits.push.apply(commits, map(result, ({ commit }) => commit.author.date))
+  }
+
+  return commits.reverse()
+}
+
+export async function getIssuesDates (github, user, repo) {
+  let result = await github.issues.getForRepo({
+    repo,
+    direction: 'asc',
+    state: 'all',
+    user
+  })
+
+  const issues = map(result, ({ created_at, closed_at }) => ({ created_at, closed_at }))
+  while (github.hasNextPage(result)) {
+    result = await github.getNextPage(result)
+    issues.push.apply(issues, map(result, ({ created_at, closed_at }) => ({ created_at, closed_at })))
+  }
+
+  return issues
 }
