@@ -1,0 +1,67 @@
+{
+  "name": "github-contributions-stats",
+  "version": "0.0.1",
+  "license": "GPL-3.0",
+  "description": "",
+  "keywords": [],
+  "homepage": "https://github.com/Wescoeur/github-contributions-stats",
+  "bugs": "https://github.com/Wescoeur/github-contributions-stats/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Wescoeur/github-contributions-stats"
+  },
+  "author": {
+    "name": "Ronan Abhamon",
+    "email": "ronan.abhamon@gmail.com"
+  },
+  "preferGlobal": false,
+  "main": "dist/",
+  "bin": {},
+  "files": [
+    "dist/"
+  ],
+  "engines": {
+    "node": ">=0.12"
+  },
+  "dependencies": {
+    "babel-runtime": "^6.11.6",
+    "lodash.map": "^4.5.1",
+    "promise-toolbox": "^0.4.0"
+  },
+  "devDependencies": {
+    "babel-eslint": "^6.1.2",
+    "babel-plugin-transform-decorators-legacy": "^1.3.4",
+    "babel-plugin-transform-runtime": "^6.12.0",
+    "babel-preset-es2015": "^6.13.2",
+    "babel-preset-stage-0": "^6.5.0",
+    "dependency-check": "^2.5.1",
+    "github": "^2.4.0",
+    "standard": "^7.0.0"
+  },
+  "scripts": {
+    "build": "NODE_ENV=production babel --source-maps --out-dir=dist/ src/",
+    "depcheck": "dependency-check ./package.json",
+    "dev": "babel --watch --source-maps --out-dir=dist/ src/",
+    "dev-test": "mocha --opts .mocha.opts --watch --reporter=min \"dist/**/*.spec.js\"",
+    "lint": "standard",
+    "posttest": "npm run lint && npm run depcheck",
+    "prepublish": "npm run build",
+    "test": "nyc mocha --opts .mocha.opts \"dist/**/*.spec.js\""
+  },
+  "babel": {
+    "plugins": [
+      "transform-decorators-legacy",
+      "transform-runtime"
+    ],
+    "presets": [
+      "stage-0",
+      "es2015"
+    ]
+  },
+  "standard": {
+    "ignore": [
+      "dist"
+    ],
+    "parser": "babel-eslint"
+  }
+}
