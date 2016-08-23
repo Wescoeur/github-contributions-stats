@@ -1,5 +1,20 @@
+import findIndex from 'lodash.findindex'
 import map from 'lodash.map'
 import reduce from 'lodash.reduce'
+import slice from 'lodash.slice'
+
+// ===================================================================
+
+const getDataSince = (data, since, dateField = undefined) => {
+  since = new Date(since).getTime()
+
+  const predicate = (dateField === undefined)
+    ? data => new Date(data).getTime() >= since
+    : data => new Date(data[dateField]).getTime() >= since
+
+  const index = findIndex(data, predicate)
+  return (index !== -1) ? slice(data, index, data.length) : []
+}
 
 // ===================================================================
 
@@ -10,7 +25,9 @@ const STARGAZERS_HEADERS = {
 
 const mapStars = stars => map(stars, 'starred_at')
 
-export async function getStarsDates (github, user, repo) {
+export async function getStarsDates (github, user, repo, {
+  since
+} = {}) {
   let result = await github.activity.getStargazersForRepo({
     headers: STARGAZERS_HEADERS,
     repo,
@@ -23,14 +40,21 @@ export async function getStarsDates (github, user, repo) {
     stars.push.apply(stars, mapStars(result))
   }
 
-  return { type: 'starsDates', data: stars }
+  return {
+    type: 'starsDates',
+    data: since
+      ? getDataSince(stars, since)
+      : stars
+  }
 }
 
 // -------------------------------------------------------------------
 
 const mapForks = forks => map(forks, 'created_at')
 
-export async function getForksDates (github, user, repo) {
+export async function getForksDates (github, user, repo, {
+  since
+} = {}) {
   let result = await github.repos.getForks({
     repo,
     sort: 'oldest',
@@ -43,16 +67,24 @@ export async function getForksDates (github, user, repo) {
     forks.push.apply(forks, mapForks(result))
   }
 
-  return { type: 'forksDates', data: forks }
+  return {
+    type: 'forksDates',
+    data: since
+      ? getDataSince(forks, since)
+      : forks
+  }
 }
 
 // -------------------------------------------------------------------
 
 const mapCommits = commits => map(commits, ({ commit }) => commit.author.date)
 
-export async function getCommitsDates (github, user, repo) {
+export async function getCommitsDates (github, user, repo, {
+  since
+} = {}) {
   let result = await github.repos.getCommits({
     repo,
+    since,
     user
   })
 
@@ -62,7 +94,10 @@ export async function getCommitsDates (github, user, repo) {
     commits.push.apply(commits, mapCommits(result))
   }
 
-  return { type: 'commitsDates', data: commits.reverse() }
+  return {
+    type: 'commitsDates',
+    data: commits.reverse()
+  }
 }
 
 // -------------------------------------------------------------------
@@ -71,12 +106,16 @@ const reduceIssues = issues => reduce(issues, (result, { closed_at,  created_at,
   if (!pull_request) {
     result.push({ created_at, closed_at })
   }
-})
+  return result
+}, [])
 
-export async function getIssuesDates (github, user, repo) {
+export async function getIssuesDates (github, user, repo, {
+  since
+} = {}) {
   let result = await github.issues.getForRepo({
     direction: 'asc',
     repo,
+    since, // Warning: Github uses the update_at field, not created_at.
     state: 'all',
     user
   })
@@ -87,5 +126,10 @@ export async function getIssuesDates (github, user, repo) {
     issues.push.apply(issues, reduceIssues(result))
   }
 
-  return { type: 'issuesDates', data: issues }
+  return {
+    type: 'issuesDates',
+    data: since
+      ? getDataSince(issues, since, 'created_at')
+      : issues
+  }
 }

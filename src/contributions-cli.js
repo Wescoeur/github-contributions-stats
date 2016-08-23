@@ -20,7 +20,7 @@ const MARGIN = 60
 const helper = () => {
   console.error(`contributions-cli --help, -h
   Display this help message.
-contributions-cli --call=<call> --repo=<repo> --user=<username> --token=<token> [--output=<output>]
+contributions-cli --call=<call> --repo=<repo> --user=<username> --token=<token> [--since=<timestamp>] [--output=<output>]
   Fetch the stats.
     --call=<call>
       Use a function in this list to get stats:${map(fetchStats, (_, key) => ` ${key}`)}
@@ -29,9 +29,12 @@ contributions-cli --call=<call> --repo=<repo> --user=<username> --token=<token> 
     --user=<username>
       Github account name of repository.
     --token
-      Used instead of password. A github token.
+      A github token.
     --output
       Output file. Default stdout.
+    --since=<timestamp>
+      Get stats since a timestamp.
+      Timestamp is in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.
 contributions-cli --convert --input=<input> --output=<output>
   Make a png chart from a file.
 `)
@@ -40,7 +43,7 @@ contributions-cli --convert --input=<input> --output=<output>
 
 // ===================================================================
 
-const STRING_ARGS = [ 'call', 'input', 'output', 'password', 'repo', 'token', 'user' ]
+const STRING_ARGS = [ 'call', 'input', 'output', 'repo', 'since', 'token', 'user' ]
 
 const ALIAS = {
   call: 'c',
@@ -78,15 +81,6 @@ const parseArgs = argsList => {
 
 // ===================================================================
 
-const computeAuthentification = ({ user: username, password, token }) => ({
-  password,
-  token,
-  type: password ? 'basic' : 'token',
-  username
-})
-
-// ===================================================================
-
 const X_AXIS_STYLE = {
   'font-size': '12px'
 }
@@ -116,10 +110,10 @@ const computeChart = (stats, output) => {
   const height = CHART_HEIGHT - MARGIN
 
   const x = d3.scaleTime()
-    .range([0, width])
+    .range([ 0, width ])
     .domain(d3.extent(data, d => d.date))
   const y = d3.scaleLinear()
-    .range([height, 0])
+    .range([ height, 0 ])
     .domain(d3.extent(data, d => d.value))
 
   const line = d3.line()
@@ -155,9 +149,7 @@ const computeChart = (stats, output) => {
           .attr('d', line)
           ::setStyles(LINE_STYLE)
 
-        fs.writeFile(output, window.d3.select('.container').html())
-          .then(resolve)
-          .catch(reject)
+        return window.d3.select('.container').html()
       }
     })
   })
@@ -179,8 +171,8 @@ async function _exec () {
       helper()
     }
 
-    const stats = JSON.parse(await fs.readFile(args.input))
-    await computeChart(stats, args.output)
+    const chart = await computeChart(JSON.parse(await fs.readFile(args.input)))
+    await fs.writeFile(args.output, chart)
 
     return
   }
@@ -198,8 +190,13 @@ async function _exec () {
 
   // TODO: Test args.output before call.
 
-  const github = getGithubApiInstance(args.user, computeAuthentification(args))
-  const stats = await call(github, args.user, args.repo)
+  const github = getGithubApiInstance(args.user, {
+    token: args.token,
+    type: 'token',
+    username: args.user
+  })
+
+  const stats = await call(github, args.user, args.repo, { since: args.since })
 
   if (args.output) {
     await fs.writeFile(args.output, JSON.stringify(stats))
