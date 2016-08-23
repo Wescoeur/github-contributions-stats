@@ -149,7 +149,7 @@ const computeChart = (stats, output) => {
           .attr('d', line)
           ::setStyles(LINE_STYLE)
 
-        return window.d3.select('.container').html()
+        resolve(window.d3.select('.container').html())
       }
     })
   })
