@@ -23,7 +23,7 @@ export async function getStarsDates (github, user, repo) {
     stars.push.apply(stars, mapStars(result))
   }
 
-  return stars
+  return { type: 'starsDates', data: stars }
 }
 
 // -------------------------------------------------------------------
@@ -43,7 +43,7 @@ export async function getForksDates (github, user, repo) {
     forks.push.apply(forks, mapForks(result))
   }
 
-  return forks
+  return { type: 'forksDates', data: forks }
 }
 
 // -------------------------------------------------------------------
@@ -62,7 +62,7 @@ export async function getCommitsDates (github, user, repo) {
     commits.push.apply(commits, mapCommits(result))
   }
 
-  return commits.reverse()
+  return { type: 'commitsDates', data: commits.reverse() }
 }
 
 // -------------------------------------------------------------------
@@ -87,5 +87,5 @@ export async function getIssuesDates (github, user, repo) {
     issues.push.apply(issues, reduceIssues(result))
   }
 
-  return issues
+  return { type: 'issuesDates', data: issues }
 }
