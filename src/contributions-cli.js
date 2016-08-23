@@ -211,12 +211,6 @@ async function _exec () {
   }
 }
 
-async function exec () {
-  try {
-    await _exec()
-  } catch (e) {
-    console.error('error', e)
-  }
+export default async function main () {
+  return _exec()
 }
-
-exec()
