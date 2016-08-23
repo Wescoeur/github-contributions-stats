@@ -126,14 +126,20 @@ const computeChart = (stats, output) => {
       done: (errors, window) => {
         window.d3 = d3.select(window.document)
 
-        const svg = window.d3.select('body')
+        let svg = window.d3.select('body')
           .append('div')
             .attr('class', 'container')
             .append('svg')
               .attr('width', CHART_WIDTH)
               .attr('height', CHART_HEIGHT)
-              .append('g')
-                .attr('transform', `translate(${MARGIN / 2}, ${MARGIN / 2})`)
+
+        svg.append('rect')
+          .attr('width', '100%')
+          .attr('height', '100%')
+          .attr('fill', 'white')
+
+        svg = svg.append('g')
+          .attr('transform', `translate(${MARGIN / 2}, ${MARGIN / 2})`)
 
         svg.append('g')
           .call(d3.axisBottom(x))
